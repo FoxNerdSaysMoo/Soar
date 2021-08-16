@@ -6,14 +6,14 @@ from .api import Auth, Channels, Chat
 app = Sanic("Soar")
 
 app.static('/static', './soar/static/')
+Auth.setup(app)
+Chat.setup(app)
+Channels.setup(app)
 
 
 @app.listener('before_server_start')
 def init(sanic, loop):
     app.ctx.db = SoarDB()
-    Auth(app)
-    Chat(app)
-    Channels(app)
 
 
 app.websocket_enabled = True

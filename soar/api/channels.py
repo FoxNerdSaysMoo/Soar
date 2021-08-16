@@ -8,23 +8,28 @@ from .snowflakes import channel_snowflake
 
 
 class Channels:
-    def __init__(self, app):
-        self.app = app
+    app = None
+
+    @staticmethod
+    def setup(_app):
+        app = _app
+        middleware = Middleware(app)
 
         bp = Blueprint("channelsapi", url_prefix="/api/channels")
         bp.middleware(middleware.check_auth, "request")
 
-        bp.add_route(create, "/create")
+        bp.add_route(Channels.create, "/create")
         app.blueprint(bp)
 
+    @staticmethod
     async def create(self, request):
         data = request.json
 
         if data["scope"] in ["dm", "private"]:
             if "members" not in data:
-                return json({"error": "members not provided"})
+                return response.json({"error": "members not provided"})
 
-        date = datetime.datetime()
+        date = datetime.datetime.now()
 
         channel = {
             "name": data["name"],
@@ -39,6 +44,6 @@ class Channels:
             "roles": {}
         }
 
-        await self.app.ctx.db["channels"].insert_one({**channel})
+        await Channels.app.ctx.db["channels"].insert_one({**channel})
 
         return response.json(channel)

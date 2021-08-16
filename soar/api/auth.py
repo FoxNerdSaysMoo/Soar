@@ -7,22 +7,25 @@ from .middleware import Middleware
 
 
 class Auth:
-    def __init__(self, app):
-        self.app = app
-        self.middleware = Middleware(app)
-        self.setup()
+    app = None
 
-    def setup(self):
+    @staticmethod
+    def setup(_app):
+        app = _app
+        middleware = Middleware(app)
+
         bp = Blueprint(name="authapi", url_prefix="/api/auth")
 
-        bp.middleware(self.middleware.check_auth, 'request')
+        bp.middleware(middleware.check_auth, 'request')
 
-        bp.add_route(self.register, '/register')
-        bp.add_route(self.login, '/login')
+        bp.add_route(Auth.register, '/register')
+        bp.add_route(Auth.login, '/login')
 
-        self.app.blueprint(bp)
+        app.blueprint(bp)
 
-    async def register(self, request):
+    @staticmethod
+    async def register(request):
+        users = Auth.app.ctx.db["users"]
         data = request.json
 
         count = await users.count_documents({"username": data["un"]})
@@ -42,9 +45,10 @@ class Auth:
 
         return response.json({"un": data["un"]})
 
-    async def login(self, request):
+    @staticmethod
+    async def login(request):
         data = request.json
-        users = self.app.ctx["users"]
+        users = Auth.app.ctx["users"]
 
         await asyncio.sleep(0.1)
 
